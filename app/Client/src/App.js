@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Axios from 'axios';
 import './App.css';
 
@@ -12,6 +12,8 @@ function App() {
 	const [password, setPassword] = useState('');
 
 	const [loginStatus, setLoginStatus] = useState('');
+
+	Axios.defaults.withCredentials = true;
 
 	const register = _ => {
 		console.log('registering: ' + usernameReg + ' ' + passwordReg);
@@ -41,6 +43,18 @@ function App() {
 			console.log(error);
 		});
 	}
+
+	// React.StrictMode renders components twice in development mode, that's why useEffect is called twice
+	useEffect(_ => {
+		Axios.get(`http://localhost:${serverPort}/login`).then(response => {
+			//console.log(response);
+			if (response.data.loggedIn === true) {
+				setLoginStatus(response.data.user[0].username);
+			}
+		}).catch(error => {
+			console.log(error);
+		});
+	}, []);
 
 	return (
 		<div className='App'>
