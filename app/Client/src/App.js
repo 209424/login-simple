@@ -3,12 +3,14 @@ import Axios from 'axios';
 import './App.css';
 
 function App() {
+	const serverPort = 3001;
 
 	const [usernameReg, setUsernameReg] = useState('');
 	const [passwordReg, setPasswordReg] = useState('');
 
 	const register = _ => {
-		Axios.post('http://localhost:3001/register', {
+		console.log('registering: ' + usernameReg + ' ' + passwordReg);
+		Axios.post(`http://localhost:${serverPort}/register`, {
 			username: usernameReg,
 			password: passwordReg
 		}).then(response => {
