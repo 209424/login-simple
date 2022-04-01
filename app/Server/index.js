@@ -44,7 +44,7 @@ db.query('select * from users',
 
 // on app posted
 app.post('/register', (req, res) => {
-	console.log('posted: %o', req.body)
+	console.log('posted to register: %o', req.body)
 	const username = req.body.username;
 	const password = req.body.password;
 
@@ -52,12 +52,35 @@ app.post('/register', (req, res) => {
 		[username, password],
 		(err, result) => {
 			if (err) {
-				console.log('Błąd: ' + err);
+				console.log('insert error: ' + err);
 				res.status(500).send(err);
 			}
 			else {
-				console.log('Wynik: %o', result);
+				console.log('insert result: %o', result);
 				res.status(200).send(result);
+			}
+		});
+});
+
+app.post('/login', (req, res) => {
+	console.log('posted to login: %o', req.body)
+	const username = req.body.username;
+	const password = req.body.password;
+
+	db.query('SELECT * FROM users WHERE username = ? AND password = ?',
+		[username, password],
+		(err, result) => {
+			if (err) {
+				console.log('insert error: ' + err);
+				res.status(500).send({error: err});
+			}
+			if (result.length > 0) {
+				console.log('insert result: %o', result);
+				res.status(200).send(result);
+			}
+			else {
+				console.log('login failed');
+				res.status(200).send({message: 'Wrong username or password!'});
 			}
 		});
 });
