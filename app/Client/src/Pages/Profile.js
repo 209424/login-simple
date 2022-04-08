@@ -7,9 +7,10 @@ function Profile() {
 	return (
 		<div>
 			<h1>Profile for {userId}</h1>
+
 			<button onClick={_ => {
-				navigate('/about');
-			}}>To About
+				navigate('/login');
+			}}>Logout
 			</button>
 		</div>
 	);

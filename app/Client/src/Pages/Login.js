@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Axios from 'axios';
 import '../Styles/Login.css';
-import {useNavigate} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 
 function Login() {
 
@@ -9,9 +9,6 @@ function Login() {
 	const navigate = useNavigate();
 
 	// Variable and its setter
-	const [usernameReg, setUsernameReg] = useState('');
-	const [passwordReg, setPasswordReg] = useState('');
-
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 
@@ -19,20 +16,7 @@ function Login() {
 
 	Axios.defaults.withCredentials = true;
 
-	const handleRegisterClicked = _ => {
-		console.log('registering: ' + usernameReg + ' ' + passwordReg);
-		Axios.post(`http://localhost:${serverPort}/register`, {
-			username: usernameReg,
-			password: passwordReg
-		}).then(response => {
-			console.log(response);
-		}).catch(error => {
-			console.log(error);
-		});
-	}
-
 	const handleLoginClicked = _ => {
-
 		console.log('logging in: ' + username + ' ' + password);
 		Axios.post(`http://localhost:${serverPort}/login`, {
 			username: username,
@@ -56,14 +40,15 @@ function Login() {
 
 	const handleSuccessfulLogin = response => {
 		console.log('login successful');
-		setLoginStatus(response.data[0].username);
-		const userId = response.data[0].id;
+		const userData = response.data[0] ? response.data[0].user : response.data.user[0];
+		setLoginStatus(userData.username);
+		const userId = userData.id;
 		// redirect to application page
 		navigate(`/profile/${userId}`);
 	}
 
 	// React.StrictMode renders components twice in development mode, that's why useEffect is called twice
-	// Cookies
+	// Check if a user remains logged in (cookies)
 	useEffect(_ => {
 		Axios.get(`http://localhost:${serverPort}/login`).then(response => {
 			//console.log(response);
@@ -78,19 +63,6 @@ function Login() {
 
 	return (
 		<div className='login_page'>
-			<div className='registration'>
-				<h1>Registration</h1>
-				<label>Username</label>
-				<input type='text' onChange={event => {
-					setUsernameReg(event.target.value);
-				}}/>
-				<label>Password</label>
-				<input type='password' onChange={event => {
-					setPasswordReg(event.target.value);
-				}}/>
-				<button onClick={handleRegisterClicked}>Register</button>
-			</div>
-
 			<div className='login'>
 				<h1>Login</h1>
 				<input type='text' placeholder='Username' onChange={event => {
@@ -100,6 +72,8 @@ function Login() {
 					setPassword(event.target.value);
 				}}/>
 				<button onClick={handleLoginClicked}>Login</button>
+
+				<p>If you don't have an account, <Link to='/register'>register</Link>.</p>
 			</div>
 
 			<h2>{loginStatus}</h2>
