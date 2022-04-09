@@ -113,18 +113,25 @@ app.post('/login', (req, res) => {
 					if (response) {
 						req.session.user = result;
 						console.log(req.session.user);
-						res.send(result)
+						res.send(result);
 					}
 					else {
-						res.send({message: 'Wrong username or password!'})
+						res.send({message: 'Wrong username or password!'});
 					}
 				});
 			}
 			else {
 				console.log('login failed');
-				res.send({message: 'User doesn\'t exist!'})
+				res.send({message: 'User doesn\'t exist!'});
 			}
 		});
+});
+
+// on app posted to logout
+app.post('/logout', (req, res) => {
+	console.log('posted to logout: %o', req.body);
+	req.session.user = undefined;
+	res.send({message: 'Logged out!'});
 });
 
 const serverPort = 3001;

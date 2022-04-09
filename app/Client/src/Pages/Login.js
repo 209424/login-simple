@@ -40,7 +40,7 @@ function Login() {
 
 	const handleSuccessfulLogin = response => {
 		console.log('login successful');
-		const userData = response.data[0] ? response.data[0].user : response.data.user[0];
+		const userData = response.data[0] ? response.data[0] : response.data.user[0];
 		setLoginStatus(userData.username);
 		const userId = userData.id;
 		// redirect to application page
