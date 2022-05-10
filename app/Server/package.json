@@ -5,9 +5,11 @@
 		"bcrypt": "^5.0.1",
 		"body-parser": "^1.19.2",
 		"cookie-parser": "^1.4.6",
+		"cookie-session": "^2.0.0",
 		"cors": "^2.8.5",
 		"express": "^4.17.3",
 		"express-session": "^1.17.2",
-		"mysql": "^2.18.1"
+		"mysql2": "^2.3.3",
+		"sequelize": "^6.19.0"
 	}
 }

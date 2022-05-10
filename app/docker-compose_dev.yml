@@ -31,19 +31,16 @@ services:
             - "3001:3001"
         restart: always
 
-    # service 1 named nginx-prod
-    nginx-prod:
+    client:
         build:
-            # the context (working directory) is the current directory
-            # change this to the directory containing the dockerfile if in a different place
+            dockerfile: Client/Dockerfile_dev__
             context: "./Client"
-            # the dockerfile to be run
-            dockerfile: Dockerfile
-              # map the exposed port from the underlying service to a port exposed to the outside
-              # in this case  map port 80 exposed by nginx to port 3009 on the outside
-            # to be used to access the container from the outside
+        volumes:
+            - simple-login-client-data:/var/www/html
+        depends_on:
+            - server
         ports:
-            - "3009:80"
+            - "3000:3000"
 volumes:
     simple-login-mysql-data:
     simple-login-server-data:

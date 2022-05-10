@@ -4,55 +4,57 @@ import '../Styles/Login.css';
 import {Link, useNavigate} from 'react-router-dom';
 
 function Login() {
-
 	const serverPort = 3001;
+	const serverUrl = `http://localhost:${serverPort}`;
 	const navigate = useNavigate();
 
 	// Variable and its setter
-	const [username, setUsername] = useState('');
+	const [usernameOrEmail, setUsernameOrEmail] = useState('');
 	const [password, setPassword] = useState('');
 
 	const [loginStatus, setLoginStatus] = useState('');
 
 	Axios.defaults.withCredentials = true;
 
-	const handleLoginClicked = _ => {
-		console.log('logging in: ' + username + ' ' + password);
-		Axios.post(`http://localhost:${serverPort}/login`, {
-			username: username,
+	const handleLoginClicked = event => {
+		console.log('Login button clicked');
+		Axios.post(`${serverUrl}/login`, {
+			username: usernameOrEmail,
+			email: usernameOrEmail,
 			password: password
 		}).then(response => {
-			if (response.data.message) {
-				setLoginStatus(response.data.message);
-			}
-			else if (response.data.error) {
-				setLoginStatus(response.data.error.code);
-			}
-			else {
-				// LOGIN SUCCESSFUL
-				handleSuccessfulLogin(response);
-			}
+			// LOGIN SUCCESSFUL
+			handleSuccessfulLogin(response);
 			console.log(response);
 		}).catch(error => {
-			console.log(error);
+			let errorMessage = error.response?.data?.message || error.message;
+			setLoginStatus(errorMessage);
 		});
+		event.preventDefault();
 	};
 
 	const handleSuccessfulLogin = response => {
-		console.log('login successful');
-		const userData = response.data[0] ? response.data[0] : response.data.user[0];
-		setLoginStatus(userData.username);
+		// response.data ≔ {id: 1, username: "admin"}
+		console.log('Login successful');
+		const userData = response.data;
+		setLoginStatus(`Logging in: ${userData.username}`);
 		const userId = userData.id;
 		// redirect to application page
 		navigate(`/profile/${userId}`);
 	}
 
-	// React.StrictMode renders components twice in development mode, that's why useEffect is called twice
-	// Check if a user remains logged in (cookies)
+	// React.StrictMode renders components twice in development mode, useEffect is called twice if present.
+	// useEffect pilnuje, aby strona logowania nie zniknęła przed wykonaniem funkcji.
+	// Funkcja przekazana do useEffect zostanie uruchomiona po tym, jak zmiany zostaną wyświetlone na ekranie.
+	// Domyślnie efekty są uruchamiane po każdym wyrenderowaniu komponentu.
+	// Jeżeli zostanie przekazany drugi argument, to efekt zostanie uruchamiany tylko wtedy, gdy zmieni się właściwość argumentu.
+	// Tutaj przekazano pustą tablicę, czyli funkcja wykona się tylko raz po odświeżeniu strony.
 	useEffect(_ => {
-		Axios.get(`http://localhost:${serverPort}/login`).then(response => {
-			//console.log(response);
-			if (response.data.loggedIn === true) {
+		// Pobieranie danych logowania z serwera
+		// Tam znajduje się session.user, czyli podstawowe dane o zalogowanym użytkowniku
+		Axios.get(`${serverUrl}/login`).then(response => {
+			// Jeżeli użytkownik pozostaje zalogowany, to wykonujemy funkcję, która normalnie jest wykonywana po logowaniu
+			if (response.data?.id) {
 				// LOGIN SUCCESSFUL
 				handleSuccessfulLogin(response);
 			}
@@ -65,18 +67,29 @@ function Login() {
 		<div className='login_page'>
 			<div className='login'>
 				<h1>Login</h1>
-				<input type='text' placeholder='Username' onChange={event => {
-					setUsername(event.target.value);
-				}}/>
-				<input type='password' placeholder='Password' onChange={event => {
-					setPassword(event.target.value);
-				}}/>
-				<button onClick={handleLoginClicked}>Login</button>
+				<form id='login' className='login_form' onSubmit={handleLoginClicked}>
+					<div className='form-group'>
+						<label htmlFor='username'>Username or email</label>
+						<input type='text' className='form-control' id='username' autoComplete='username'
+						       placeholder='Enter username or email'
+						       value={usernameOrEmail}
+						       onChange={e => {
+							       setUsernameOrEmail(e.target.value)
+						       }}/>
+					</div>
+					<div className='form-group'>
+						<label htmlFor='password'>Password</label>
+						<input type='password' className='form-control' id='password' autoComplete='password'
+						       placeholder='Enter password'
+						       value={password}
+						       onChange={e => setPassword(e.target.value)}/>
+					</div>
+					<input type="submit" value="Log in"/>
+					<p>{loginStatus}</p>
+				</form>
 
-				<p>If you don't have an account, <Link to='/register'>register</Link>.</p>
+				<p>If you don't have an account, <Link to='/register'>register</Link></p>
 			</div>
-
-			<h2>{loginStatus}</h2>
 		</div>
 	);
 }
