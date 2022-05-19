@@ -5,8 +5,9 @@ import {Link, useNavigate} from 'react-router-dom';
 import validator from 'validator';
 
 function Register() {
-	const serverPort = 3001;
-	const serverUrl = `http://localhost:${serverPort}`;
+	// const serverPort = 3001;
+	// const serverUrl = `http://localhost:${serverPort}`;
+	const serverUrl = `api`;
 	const navigate = useNavigate();
 
 	// Variable and its setter

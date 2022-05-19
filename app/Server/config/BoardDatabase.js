@@ -1,8 +1,8 @@
 const {Sequelize} = require('sequelize');
 
-const dbBoards = new Sequelize('simple_board', 'toor', 'toor', {
-	host: "mysql_boards",
+const dbBoard = new Sequelize('db_board', 'toor', 'toor', {
+	host: "mysql_board",
 	dialect: "mysql"
 });
 
-module.exports = dbBoards;
+module.exports = dbBoard;

@@ -2,49 +2,92 @@ version: "3.8"
 
 services:
     mysql_auth:
-        image: mysql:5.7
+        container_name: "mysql-auth"
+        image: mysql
+        restart: always
+        cap_add:
+            - SYS_NICE
         volumes:
-            - simple-login-mysql-data:/var/lib/mysql
+            - simple-login-mysql-auth-data:/var/lib/mysql
+        ports:
+            - "33006:3306"
         environment:
             MYSQL_ROOT_PASSWORD: root
             MYSQL_USER: toor
             MYSQL_PASSWORD: toor
-            MYSQL_DATABASE: simple_auth
-        ports:
-            - "33006:3306"
-        restart: on-failure
+            MYSQL_DATABASE: db_auth
+            MYSQL_HOST: localhost
 
-    server:
+    mysql_board:
+        container_name: "mysql-board"
+        image: mysql
+        restart: always
+        cap_add:
+            - SYS_NICE
+        volumes:
+            - simple-login-mysql-board-data:/var/lib/mysql
+        ports:
+            - "33007:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_USER: toor
+            MYSQL_PASSWORD: toor
+            MYSQL_DATABASE: db_board
+            MYSQL_HOST: localhost
+
+    api:
         build:
             dockerfile: Dockerfile
             context: "./Server"
-        volumes:
-            - simple-login-server-data:/var/www/html
         depends_on:
             - mysql_auth
+        volumes:
+            - /app/node_modules
+            - ./Server:/app
+#            - simple-login-server-data:/app
         environment:
             MYSQL_ROOT_PASSWORD: root
             MYSQL_USER: toor
             MYSQL_PASSWORD: toor
-            MYSQL_DATABASE: LoginSystem
-        ports:
-            - "3001:3001"
-        restart: always
+#            MYSQL_DATABASE: db_auth
+#            MYSQL_HOST_IP: mysql_auth
+            MYSQL_DATABASE: db_board
+            MYSQL_HOST_IP: mysql_board
 
-    # service 1 named nginx-prod
-    nginx-prod:
+    client:
+        stdin_open: true
+        environment:
+            - CHOKIDAR_USEPOLLING=true
         build:
-            # the context (working directory) is the current directory
-            # change this to the directory containing the dockerfile if in a different place
-            context: "./Client"
-            # the dockerfile to be run
             dockerfile: Dockerfile
-              # map the exposed port from the underlying service to a port exposed to the outside
-              # in this case  map port 80 exposed by nginx to port 3009 on the outside
-            # to be used to access the container from the outside
+            context: ./Client
+        volumes:
+            - /app/node_modules
+            - ./Client:/app
+#            - simple-login-client-data:/app
+
+    nginx-prod:
+        depends_on:
+            - api
+            - client
+        restart: always
+        build:
+            dockerfile: Dockerfile
+            context: ./nginx
         ports:
             - "3009:80"
+
+    adminer:
+        image: adminer:latest
+        restart: unless-stopped
+        ports:
+            - "8000:8080"
+        depends_on:
+            - mysql_auth
+        environment:
+            ADMINER_DEFAULT_SERVER: mysql_auth
 volumes:
-    simple-login-mysql-data:
-    simple-login-server-data:
-    simple-login-client-data:
+    simple-login-mysql-auth-data:
+    simple-login-mysql-board-data:
+#    simple-login-server-data:
+#    simple-login-client-data:

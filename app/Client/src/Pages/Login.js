@@ -4,8 +4,9 @@ import '../Styles/Login.css';
 import {Link, useNavigate} from 'react-router-dom';
 
 function Login() {
-	const serverPort = 3001;
-	const serverUrl = `http://localhost:${serverPort}`;
+	// const serverPort = 3001;
+	// const serverUrl = `http://localhost:${serverPort}`;
+	const serverUrl = `api`;
 	const navigate = useNavigate();
 
 	// Variable and its setter

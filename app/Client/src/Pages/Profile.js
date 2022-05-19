@@ -3,8 +3,9 @@ import {useNavigate, useParams} from 'react-router-dom'
 import Axios from "axios";
 
 function Profile() {
-	const serverPort = 3001;
-	const serverUrl = `http://localhost:${serverPort}`;
+	// const serverPort = 3001;
+	// const serverUrl = `http://localhost:${serverPort}`;
+	const serverUrl = `/api`;
 	const navigate = useNavigate();
 	const {userId: profileOwnerUserId} = useParams();
 	const [logoutButtonText, setLogoutButtonText] = useState('Logout');

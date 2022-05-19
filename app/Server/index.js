@@ -9,7 +9,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-	origin: ["http://localhost:3000", "http://localhost:3009"],
+	origin: ["http://localhost:3000"],
 	methods: ["GET", "POST"],
 	credentials: true
 }));
@@ -32,11 +32,29 @@ const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
 const {Op} = require('sequelize')
-const Users = require("./models/UserModel");
 
-// on app posted to register
+const model = require("./models/TheModel");
+let Board_table = model.Board_table;
+let User_table = model.User_table;
+let Card_table = model.Card_table;
+
+// Tworzenie tabel, jeżeli nie istnieją
+(async () => {
+	try {
+		console.log('Syncing database...');
+		await User_table.sync();
+		await Board_table.sync();
+		await Card_table.sync();
+		console.log('Database synced.');
+	}
+	catch (err) {
+		console.error('Database sync error:');
+		console.error(err);
+	}
+})()
+
 app.post('/register', (req, res) => {
-	console.log('posted to register: %o', req.body)
+	console.log('POST to register');
 	const username = req.body.username;
 	const email = req.body.email;
 	const password = req.body.password;
@@ -48,36 +66,27 @@ app.post('/register', (req, res) => {
 			console.log(err);
 		}
 		else {
-			// Create table Users if not exists
-			Users.sync().then(() => {
-				// Insert new user
-				Users.create({
-					username: username,
-					email: email,
-					password: hash
-				}).then(result => {
-					console.log('Created user: ' + result.username);
-					res.send(result);
-				}).catch(err => {
-					let commonError = err.errors?.[0];
-
-					console.error('Register error');
-					if (commonError)
-						res.status(400).send({
-							errorBody: {
-								path: commonError.path,
-								type: commonError.type
-							}
-						});
-					else
-						res.status(400).send({message: 'Internal server error'});
-					console.log('Error in register:');
-					console.log(err);
-				});
+			// Tworzenie nowego użytkownika
+			User_table.create({
+				username: username,
+				email: email,
+				password: hash
+			}).then(result => {
+				console.log('Created user: ' + result.username);
+				res.send(result);
 			}).catch(err => {
-				console.error('users sync error');
-				// Klient widzi: error.response.data
-				res.status(400).send({message: 'Internal server error'});
+				let commonError = err.errors?.[0];
+
+				console.error('Register error');
+				if (commonError)
+					res.status(400).send({
+						errorBody: {
+							path: commonError.path,
+							type: commonError.type
+						}
+					});
+				else
+					res.status(400).send({message: 'Internal server error'});
 				console.log('Error in register:');
 				console.log(err);
 			});
@@ -85,20 +94,18 @@ app.post('/register', (req, res) => {
 	});
 });
 
-// on app getted from login
 app.get('/login', (req, res) => {
 	// req.session.user może zawierać id i nazwę zalogowanego użytkownika lub undefined
 	res.send(req.session?.user);
 });
 
-// on app posted to login
 app.post('/login', (req, res) => {
 	console.log('POST to login');
 	const username = req.body.username;
 	const password = req.body.password;
 
-	// select user from Users where username = username or email = email
-	Users.findOne({
+	// select user from User where username = username or email = email
+	User_table.findOne({
 		where: {
 			[Op.or]: [{username: username}, {email: username}]
 		}
@@ -128,14 +135,15 @@ app.post('/login', (req, res) => {
 		}
 	}).catch(err => {
 		console.log('select error');
+		console.error(err);
 		res.status(400).send({message: 'Internal server error'});
 	});
 });
 
 app.get('/users/:userId', (req, res) => {
 	const userId = req.params.userId;
-	console.log('GET to user: ' + userId);
-	Users.findOne({
+	console.log(`GET to users/${userId}`);
+	User_table.findOne({
 		where: {
 			id: userId
 		}
@@ -155,13 +163,140 @@ app.get('/users/:userId', (req, res) => {
 	});
 });
 
-// on app posted to logout
 app.post('/logout', (req, res) => {
-	console.log('Posted to logout:');
+	console.log('POST to logout:');
 	console.log(req.session.user);
 	// Kasowanie sesji użytkownika
 	req.session.user = undefined;
 	res.send({message: 'Logged out!'});
+});
+
+app.post('/boards/create/:userId', async (req, res) => {
+	const userId = req.params.userId;
+	console.log(`POST to boards/create/${userId}`);
+	const loggedInUserId = req.session.user.id;
+	// jeżeli id zalogowanego użytkownika jest równe id właściciela tablicy
+	// noinspection EqualityComparisonWithCoercionJS
+	if (loggedInUserId == userId) {
+		console.log('Creating board for: ' + userId);
+
+		const title = req.body.title;
+		const description = req.body.description;
+
+		const user = await User_table.findOne({
+			where: {
+				id: userId
+			}
+		});
+
+		const board = await Board_table.create({
+			title: title,
+			description: description,
+			owner_id: userId
+		});
+
+		// todo: TypeError: User_table.addBoard_table is not a function
+		// await user.addBoard_table(board);
+
+		res.send(board);
+	}
+	else {
+		res.status(400).send({message: 'You are not allowed to create board for this user!'});
+	}
+});
+
+app.get('/boards/:userId', async (req, res) => {
+	const userId = req.params.userId;
+	console.log(`GET to boards/${userId}`);
+	let boards = await Board_table.findAll({
+		where: {
+			owner_id: userId
+		}
+	});
+
+	res.send(boards);
+});
+
+app.get('/cards/:userId', async (req, res) => {
+	const userId = req.params.userId;
+	console.log(`GET to cards/${userId}`);
+	let cards = await Card_table.findAll({
+		where: {
+			owner_id: userId
+		}
+	});
+
+	res.send(cards);
+});
+
+app.post('/cards/create/:userId', async (req, res) => {
+	const userId = req.params.userId;
+	console.log(`POST to cards/create/${userId}`);
+	console.log(req.body);
+	const loggedInUserId = req.session.user.id;
+	// jeżeli id zalogowanego użytkownika jest równe id właściciela tablicy
+	// noinspection EqualityComparisonWithCoercionJS
+	if (/*loggedInUserId == userId*/true) {
+		console.log('Creating card for: ' + userId);
+
+		const title = req.body.title;
+		const description = req.body.description;
+
+		const user = await User_table.findOne({
+			where: {
+				id: userId
+			}
+		});
+
+		const card = await Card_table.create({
+			title: title,
+			description: description,
+			owner_id: userId
+		});
+
+		// todo: TypeError: User_table.addBoard_table is not a function
+		// await user.addCard_table(card);
+
+		res.send(card);
+	}
+	else {
+		res.status(400).send({message: 'You are not allowed to create board for this user!'});
+	}
+});
+
+app.delete('/cards/delete/:cardId', async (req, res) => {
+	const cardId = req.params.cardId;
+	console.log(`DELETE to cards/delete/${cardId}`);
+
+	const cardToDelete = await Card_table.findOne({
+		where: {
+			id: cardId
+		}
+	});
+	await cardToDelete.destroy();
+	res.send({message: 'Card deleted!'});
+});
+
+app.put('/cards/update/:cardId', async (req, res) => {
+	const cardId = req.params.cardId;
+	console.log(`PUT to cards/update/${cardId}`);
+	console.log(req.body);
+
+	const title = req.body.title;
+	const description = req.body.description;
+
+	const cardToUpdate = await Card_table.findOne({
+		where: {
+			id: cardId
+		}
+	});
+
+	await cardToUpdate.update({
+		title: title,
+		description: description
+	});
+
+	res.send({message: 'Card updated!'});
 });
 
 const serverPort = 3001;

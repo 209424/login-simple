@@ -1,0 +1,44 @@
+.Boards {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.card_form {
+	display: inline-block;
+	justify-content: center;
+}
+
+.card_form input {
+	width: 250px;
+	margin: 10px;
+}
+
+.information {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	justify-content: center;
+	align-items: center;
+}
+
+.information input {
+	width: 300px;
+	height: 50px;
+	font-size: 14pt;
+	padding-left: 10px;
+	margin: 5px;
+}
+
+button {
+	width: 320px;
+	height: 50px;
+	margin-top: 15px;
+}
+
+.content {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	width: 100%;
+}

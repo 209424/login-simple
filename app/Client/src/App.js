@@ -6,6 +6,8 @@ import About from './Pages/About.js';
 import Login from './Pages/Login.js';
 import Register from './Pages/Register.js';
 import Profile from './Pages/Profile.js';
+import Boards from './Pages/Boards/Boards.js';
+import Cards from './Pages/Boards/Cards.js';
 import ErrorPage from './Pages/ErrorPage.js';
 
 function App() {
@@ -25,6 +27,8 @@ function App() {
 				<Route path='/login' element={<Login/>}/>
 				<Route path='/register' element={<Register/>}/>
 				<Route path='/profile/:userId' element={<Profile/>}/>
+				<Route path='/boards/:userId' element={<Boards/>}/>
+				<Route path='/cards/:userId' element={<Cards/>}/>
 				<Route path='*' element={<ErrorPage/>}/>
 			</Routes>
 		</div>
