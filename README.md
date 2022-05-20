@@ -1,3 +1,8 @@
+W folderze app uruchomić\
+`docker-compose up -d`\
+Strona będzie działać na [localhost:3009](http://localhost:3009)
+
+---
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
