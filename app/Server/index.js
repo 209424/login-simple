@@ -31,25 +31,30 @@ app.use(session({
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
-const {Op} = require('sequelize')
+const {Op, ConnectionRefusedError} = require('sequelize')
 
 const model = require("./models/TheModel");
-let Board_table = model.Board_table;
-let User_table = model.User_table;
-let Card_table = model.Card_table;
 
 // Tworzenie tabel, jeżeli nie istnieją
 (async () => {
 	try {
 		console.log('Syncing database...');
-		await User_table.sync();
-		await Board_table.sync();
-		await Card_table.sync();
+		await model.Board.sync();
+		await model.Card.sync();
+		await model.User.sync();
+		await model.BoardUser.sync();
+		await model.CardUser.sync();
 		console.log('Database synced.');
 	}
 	catch (err) {
-		console.error('Database sync error:');
-		console.error(err);
+		if (err instanceof ConnectionRefusedError) {
+			console.error('Database connection refused.');
+			console.error(err);
+		}
+		else {
+			console.error('Database sync error:');
+			console.error(err);
+		}
 	}
 })()
 
@@ -67,7 +72,7 @@ app.post('/register', (req, res) => {
 		}
 		else {
 			// Tworzenie nowego użytkownika
-			User_table.create({
+			model.User.create({
 				username: username,
 				email: email,
 				password: hash
@@ -105,7 +110,7 @@ app.post('/login', (req, res) => {
 	const password = req.body.password;
 
 	// select user from User where username = username or email = email
-	User_table.findOne({
+	model.User.findOne({
 		where: {
 			[Op.or]: [{username: username}, {email: username}]
 		}
@@ -143,7 +148,7 @@ app.post('/login', (req, res) => {
 app.get('/users/:userId', (req, res) => {
 	const userId = req.params.userId;
 	console.log(`GET to users/${userId}`);
-	User_table.findOne({
+	model.User.findOne({
 		where: {
 			id: userId
 		}
@@ -183,20 +188,19 @@ app.post('/boards/create/:userId', async (req, res) => {
 		const title = req.body.title;
 		const description = req.body.description;
 
-		const user = await User_table.findOne({
+		const user = await model.User.findOne({
 			where: {
 				id: userId
 			}
 		});
 
-		const board = await Board_table.create({
+		const board = await model.Board.create({
 			title: title,
 			description: description,
 			owner_id: userId
 		});
 
-		// todo: TypeError: User_table.addBoard_table is not a function
-		// await user.addBoard_table(board);
+		await user.addBoard(board);
 
 		res.send(board);
 	}
@@ -208,7 +212,7 @@ app.post('/boards/create/:userId', async (req, res) => {
 app.get('/boards/:userId', async (req, res) => {
 	const userId = req.params.userId;
 	console.log(`GET to boards/${userId}`);
-	let boards = await Board_table.findAll({
+	let boards = await model.Board.findAll({
 		where: {
 			owner_id: userId
 		}
@@ -220,7 +224,7 @@ app.get('/boards/:userId', async (req, res) => {
 app.get('/cards/:userId', async (req, res) => {
 	const userId = req.params.userId;
 	console.log(`GET to cards/${userId}`);
-	let cards = await Card_table.findAll({
+	let cards = await model.Card.findAll({
 		where: {
 			owner_id: userId
 		}
@@ -242,20 +246,19 @@ app.post('/cards/create/:userId', async (req, res) => {
 		const title = req.body.title;
 		const description = req.body.description;
 
-		const user = await User_table.findOne({
+		const user = await model.User.findOne({
 			where: {
 				id: userId
 			}
 		});
 
-		const card = await Card_table.create({
+		const card = await model.Card.create({
 			title: title,
 			description: description,
 			owner_id: userId
 		});
 
-		// todo: TypeError: User_table.addBoard_table is not a function
-		// await user.addCard_table(card);
+		await user.addCard(card);
 
 		res.send(card);
 	}
@@ -268,7 +271,7 @@ app.delete('/cards/delete/:cardId', async (req, res) => {
 	const cardId = req.params.cardId;
 	console.log(`DELETE to cards/delete/${cardId}`);
 
-	const cardToDelete = await Card_table.findOne({
+	const cardToDelete = await model.Card.findOne({
 		where: {
 			id: cardId
 		}
@@ -285,7 +288,7 @@ app.put('/cards/update/:cardId', async (req, res) => {
 	const title = req.body.title;
 	const description = req.body.description;
 
-	const cardToUpdate = await Card_table.findOne({
+	const cardToUpdate = await model.Card.findOne({
 		where: {
 			id: cardId
 		}

@@ -1,7 +1,8 @@
 const dbBoard = require("../config/BoardDatabase.js");
 const {DataTypes, fn, col} = require("sequelize");
 
-const Board_table = dbBoard.define('board_table', {
+// todo: użytkownicy z prawem do edycji
+const Board = dbBoard.define('board', {
 	title: {
 		type: DataTypes.STRING
 	},
@@ -18,7 +19,7 @@ const Board_table = dbBoard.define('board_table', {
 	timestamps: false
 });
 
-const Card_table = dbBoard.define('card_table', {
+const Card = dbBoard.define('card', {
 	title: {
 		type: DataTypes.STRING
 	},
@@ -35,7 +36,7 @@ const Card_table = dbBoard.define('card_table', {
 	timestamps: false
 });
 
-const User_table = dbBoard.define('user_table', {
+const User = dbBoard.define('user', {
 	username: {
 		type: DataTypes.STRING(50),
 		allowNull: false,
@@ -79,12 +80,28 @@ const User_table = dbBoard.define('user_table', {
 	freezeTableName: true
 });
 
-Board_table.belongsToMany(User_table, {through: 'board_user'});
-User_table.belongsToMany(Board_table, {through: 'board_user'});
+const BoardUser = dbBoard.define("board_user",
+	{},
+	{timestamps: false}
+);
+
+const CardUser = dbBoard.define("card_user",
+	{},
+	{timestamps: false}
+);
+
+Board.belongsToMany(User, {through: BoardUser});
+User.belongsToMany(Board, {through: BoardUser});
+
+Card.belongsToMany(User, {through: CardUser});
+User.belongsToMany(Card, {through: CardUser});
 
 // board_table.hasOne(user_table, {as: 'owner', foreignKey: 'owner_id'});
 // user_table.hasMany(board_table, {foreignKey: 'owner_id'});
 
-exports.Board_table = Board_table;
-exports.User_table = User_table;
-exports.Card_table = Card_table;
+exports.Board = Board;
+exports.Card = Card;
+exports.User = User;
+
+exports.BoardUser = BoardUser;
+exports.CardUser = CardUser;
